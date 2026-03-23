@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface User {
   _id: string;
@@ -32,171 +31,134 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const createUserData = (profile: any): User => ({
-    _id: profile.id,
-    id: profile.id,
-    name: profile.full_name,
-    email: profile.email,
-    full_name: profile.full_name,
-    role: profile.role || 'customer',
-    phone: profile.phone || undefined,
-    city: profile.city || undefined,
-    state: profile.state || undefined,
-    address: profile.address || undefined,
-    zip_code: profile.zip_code || undefined,
-  });
-
-  const fetchUserProfile = async (supabaseUser: SupabaseUser): Promise<boolean> => {
+  // Load profile in background - don't block
+  const loadProfile = async (userId: string, email: string, fullName?: string) => {
     try {
-      // Try to get existing profile
-      const { data: profile, error } = await supabase
+      const { data: profile } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', supabaseUser.id)
-        .maybeSingle();
+        .eq('id', userId)
+        .single();
 
       if (profile) {
-        setUser(createUserData(profile));
+        setUser({
+          _id: profile.id,
+          id: profile.id,
+          name: profile.full_name || email,
+          email: profile.email,
+          full_name: profile.full_name || email,
+          role: profile.role || 'customer',
+          phone: profile.phone,
+          city: profile.city,
+          state: profile.state,
+          address: profile.address,
+          zip_code: profile.zip_code,
+        });
         setIsAdmin(profile.role === 'admin');
-        return true;
       }
-
-      // Profile doesn't exist, create it
-      if (error?.code === 'PGRST116' || !profile) {
-        const newProfileData = {
-          id: supabaseUser.id,
-          email: supabaseUser.email || '',
-          full_name: supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User',
-          role: 'customer'
-        };
-
-        const { data: newProfile, error: insertError } = await supabase
-          .from('profiles')
-          .insert(newProfileData)
-          .select()
-          .single();
-
-        if (!insertError && newProfile) {
-          setUser(createUserData(newProfile));
-          setIsAdmin(false);
-          return true;
-        }
-
-        // If insert fails (maybe trigger already created it), try fetching again
-        if (insertError) {
-          const { data: retryProfile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', supabaseUser.id)
-            .single();
-
-          if (retryProfile) {
-            setUser(createUserData(retryProfile));
-            setIsAdmin(retryProfile.role === 'admin');
-            return true;
-          }
-        }
-      }
-
-      return false;
-    } catch (error) {
-      console.error('Error in fetchUserProfile:', error);
-      return false;
+    } catch (e) {
+      console.log('Profile load skipped');
     }
   };
 
   useEffect(() => {
-    let mounted = true;
-
-    const initAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (session?.user && mounted) {
-          await fetchUserProfile(session.user);
-        }
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-      } finally {
-        if (mounted) setLoading(false);
+    // Quick session check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        // Set basic user immediately
+        setUser({
+          _id: session.user.id,
+          id: session.user.id,
+          name: session.user.email || 'User',
+          email: session.user.email || '',
+          full_name: session.user.user_metadata?.full_name || session.user.email || 'User',
+          role: 'customer',
+        });
+        // Load full profile in background
+        loadProfile(session.user.id, session.user.email || '');
       }
-    };
+      setLoading(false);
+    }).catch(() => {
+      setLoading(false);
+    });
 
-    initAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return;
-
-        if (event === 'SIGNED_IN' && session?.user) {
-          setLoading(true);
-          await fetchUserProfile(session.user);
-          setLoading(false);
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
-          setIsAdmin(false);
-        }
+    // Listen to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        setUser({
+          _id: session.user.id,
+          id: session.user.id,
+          name: session.user.email || 'User',
+          email: session.user.email || '',
+          full_name: session.user.user_metadata?.full_name || session.user.email || 'User',
+          role: 'customer',
+        });
+        loadProfile(session.user.id, session.user.email || '');
+        setLoading(false);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setIsAdmin(false);
       }
-    );
+    });
 
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-      if (error) {
-        setLoading(false);
-        return { error: { message: error.message } };
-      }
-
-      if (data.user) {
-        await fetchUserProfile(data.user);
-      }
-
-      setLoading(false);
-      return { error: null };
-    } catch (error: any) {
-      setLoading(false);
-      return { error: { message: error.message || 'Sign in failed' } };
+    if (error) {
+      return { error: { message: error.message } };
     }
+
+    if (data.user) {
+      // Set user immediately - don't wait for profile
+      setUser({
+        _id: data.user.id,
+        id: data.user.id,
+        name: email,
+        email: email,
+        full_name: data.user.user_metadata?.full_name || email,
+        role: 'customer',
+      });
+      // Load profile in background
+      loadProfile(data.user.id, email);
+    }
+
+    return { error: null };
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name: fullName },
-        },
-      });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: fullName } },
+    });
 
-      if (error) {
-        setLoading(false);
-        return { error: { message: error.message } };
-      }
-
-      if (data.user) {
-        // Profile will be created by trigger or we create it
-        await fetchUserProfile(data.user);
-      }
-
-      setLoading(false);
-      return { error: null };
-    } catch (error: any) {
-      setLoading(false);
-      return { error: { message: error.message || 'Sign up failed' } };
+    if (error) {
+      return { error: { message: error.message } };
     }
+
+    if (data.user) {
+      // Create profile
+      await supabase.from('profiles').insert({
+        id: data.user.id,
+        email: email,
+        full_name: fullName,
+        role: 'customer'
+      }).select().single();
+
+      setUser({
+        _id: data.user.id,
+        id: data.user.id,
+        name: fullName,
+        email: email,
+        full_name: fullName,
+        role: 'customer',
+      });
+    }
+
+    return { error: null };
   };
 
   const signOut = async () => {
@@ -214,8 +176,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
   return context;
 };
