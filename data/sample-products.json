@@ -1,0 +1,188 @@
+{
+  "description": "Sample product data structure with nutrition information for Farm2Home",
+  "categories": ["Vegetables", "Fruits", "Dairy", "Grains", "Organic"],
+  "smartFilterTags": [
+    "high-vitamin-c",
+    "rich-in-iron",
+    "high-protein",
+    "low-calorie",
+    "high-fiber",
+    "heart-healthy",
+    "immunity-boost"
+  ],
+  "sampleProducts": [
+    {
+      "name": "Fresh Organic Spinach",
+      "description": "Nutrient-rich leafy green spinach from certified organic farms",
+      "price": 60,
+      "category": "Vegetables",
+      "unit": "250g bunch",
+      "image": "https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=400&q=80",
+      "stock": 100,
+      "isOrganic": true,
+      "isSeasonal": true,
+      "isTrending": false,
+      "nutrition": {
+        "calories": 23,
+        "protein": 2.9,
+        "carbohydrates": 3.6,
+        "fiber": 2.2,
+        "fat": 0.4,
+        "vitamins": ["Vitamin A", "Vitamin C", "Vitamin K", "Vitamin B9 (Folate)"],
+        "minerals": ["Iron", "Calcium", "Magnesium", "Potassium"]
+      },
+      "healthBenefits": [
+        "Boosts immunity with high Vitamin C",
+        "Excellent source of iron for blood health",
+        "Supports bone health with Vitamin K",
+        "Rich in antioxidants for eye health"
+      ],
+      "tags": ["rich-in-iron", "high-vitamin-c", "low-calorie", "immunity-boost"]
+    },
+    {
+      "name": "Fresh Oranges",
+      "description": "Juicy, sweet oranges bursting with Vitamin C",
+      "price": 90,
+      "category": "Fruits",
+      "unit": "1 kg (5-6 pieces)",
+      "image": "https://images.unsplash.com/photo-1547514701-42782101795e?w=400&q=80",
+      "stock": 200,
+      "isOrganic": false,
+      "isSeasonal": true,
+      "isTrending": true,
+      "nutrition": {
+        "calories": 47,
+        "protein": 0.9,
+        "carbohydrates": 12,
+        "fiber": 2.4,
+        "fat": 0.1,
+        "vitamins": ["Vitamin C", "Vitamin A", "Vitamin B1", "Vitamin B9"],
+        "minerals": ["Potassium", "Calcium"]
+      },
+      "healthBenefits": [
+        "Excellent source of Vitamin C for immunity",
+        "Helps in iron absorption",
+        "Good for heart health",
+        "Natural energy booster"
+      ],
+      "tags": ["high-vitamin-c", "low-calorie", "immunity-boost", "heart-healthy"]
+    },
+    {
+      "name": "Fresh Paneer",
+      "description": "Soft and fresh cottage cheese made from pure cow milk",
+      "price": 280,
+      "category": "Dairy",
+      "unit": "500g",
+      "image": "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=400&q=80",
+      "stock": 50,
+      "isOrganic": false,
+      "isSeasonal": false,
+      "isTrending": true,
+      "nutrition": {
+        "calories": 265,
+        "protein": 18.3,
+        "carbohydrates": 1.2,
+        "fiber": 0,
+        "fat": 20.8,
+        "vitamins": ["Vitamin A", "Vitamin D", "Vitamin B12"],
+        "minerals": ["Calcium", "Phosphorus", "Zinc"]
+      },
+      "healthBenefits": [
+        "High quality protein for muscle building",
+        "Excellent source of calcium for bones",
+        "Good for vegetarian protein intake",
+        "Contains conjugated linoleic acid"
+      ],
+      "tags": ["high-protein"]
+    },
+    {
+      "name": "Red Lentils (Masoor Dal)",
+      "description": "Premium quality red lentils, cooks quickly and is rich in protein",
+      "price": 140,
+      "category": "Grains",
+      "unit": "1 kg",
+      "image": "https://images.unsplash.com/photo-1515543904905-00d4080ed1c6?w=400&q=80",
+      "stock": 150,
+      "isOrganic": false,
+      "isSeasonal": false,
+      "isTrending": false,
+      "nutrition": {
+        "calories": 116,
+        "protein": 9,
+        "carbohydrates": 20,
+        "fiber": 8,
+        "fat": 0.4,
+        "vitamins": ["Vitamin B1", "Vitamin B6", "Vitamin B9"],
+        "minerals": ["Iron", "Phosphorus", "Potassium", "Zinc"]
+      },
+      "healthBenefits": [
+        "Excellent plant-based protein source",
+        "Very high in iron for blood health",
+        "Rich in fiber for digestion",
+        "Helps lower cholesterol"
+      ],
+      "tags": ["high-protein", "rich-in-iron", "high-fiber", "heart-healthy"]
+    },
+    {
+      "name": "Organic Almonds",
+      "description": "Premium California almonds, organically grown",
+      "price": 650,
+      "category": "Organic",
+      "unit": "500g",
+      "image": "https://images.unsplash.com/photo-1508061253366-f7da158b6d46?w=400&q=80",
+      "stock": 45,
+      "isOrganic": true,
+      "isSeasonal": false,
+      "isTrending": true,
+      "nutrition": {
+        "calories": 579,
+        "protein": 21,
+        "carbohydrates": 22,
+        "fiber": 12,
+        "fat": 49,
+        "vitamins": ["Vitamin E", "Vitamin B2"],
+        "minerals": ["Magnesium", "Manganese", "Phosphorus", "Calcium"]
+      },
+      "healthBenefits": [
+        "High in Vitamin E for skin health",
+        "Good source of healthy fats",
+        "Helps lower cholesterol",
+        "Supports brain health"
+      ],
+      "tags": ["high-protein", "high-fiber", "heart-healthy"]
+    }
+  ],
+  "apiEndpoints": {
+    "getAllProducts": {
+      "method": "GET",
+      "url": "/api/products",
+      "queryParams": {
+        "categories": "Comma-separated list: Vegetables,Fruits",
+        "tags": "Comma-separated: high-vitamin-c,high-protein",
+        "maxCalories": "Number (e.g., 100)",
+        "minProtein": "Number (e.g., 5)",
+        "organicOnly": "true or false",
+        "search": "Search text",
+        "sort": "price-asc, price-desc, name, calories, protein"
+      }
+    },
+    "getCategories": {
+      "method": "GET",
+      "url": "/api/products/categories"
+    },
+    "getTags": {
+      "method": "GET",
+      "url": "/api/products/tags"
+    }
+  },
+  "databaseSchema": {
+    "collectionName": "products",
+    "indexes": [
+      { "field": "category", "type": "single" },
+      { "field": "tags", "type": "single" },
+      { "field": "isOrganic", "type": "single" },
+      { "field": "nutrition.calories", "type": "single" },
+      { "field": "nutrition.protein", "type": "single" }
+    ]
+  }
+}
