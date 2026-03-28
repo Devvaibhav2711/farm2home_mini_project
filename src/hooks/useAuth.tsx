@@ -8,11 +8,11 @@ interface User {
   email: string;
   full_name: string;
   role: string;
-  phone?: string;
-  city?: string;
-  state?: string;
-  address?: string;
-  zip_code?: string;
+  phone?: string | null;
+  city?: string | null;
+  state?: string | null;
+  address?: string | null;
+  zip_code?: string | null;
 }
 
 interface AuthContextType {
