@@ -62,8 +62,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
+    // Safety timeout - never let loading state hang forever
+    const timeout = setTimeout(() => {
+      setLoading(false);
+    }, 5000);
+
     // Quick session check
     supabase.auth.getSession().then(({ data: { session } }) => {
+      clearTimeout(timeout);
       if (session?.user) {
         // Set basic user immediately
         setUser({
@@ -79,6 +85,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       setLoading(false);
     }).catch(() => {
+      clearTimeout(timeout);
       setLoading(false);
     });
 
@@ -101,7 +108,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
